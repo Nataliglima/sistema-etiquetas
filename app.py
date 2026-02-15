@@ -107,8 +107,6 @@ def ensure_db():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    ensure_db()  # ← ADICIONE ESTA LINHA
-    
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
