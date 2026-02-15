@@ -55,48 +55,60 @@ if not os.path.exists(UPLOAD_FOLDER):
 # ==================== BANCO DE DADOS ====================
 
 def get_db_connection():
+    """Cria conexão com banco de dados SQLite"""
     conn = sqlite3.connect(DATABASE)
     conn.row_factory = sqlite3.Row
     return conn
 
 
 def init_db():
-    conn = get_db_connection()
+    """Inicializa o banco de dados com as tabelas necessárias"""
+    try:
+        conn = get_db_connection()
+        conn.execute('''
+            CREATE TABLE IF NOT EXISTS usuarios (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                username TEXT UNIQUE NOT NULL,
+                email TEXT UNIQUE NOT NULL,
+                password TEXT NOT NULL,
+                data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+        conn.execute('''
+            CREATE TABLE IF NOT EXISTS etiquetas (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                nome TEXT NOT NULL,
+                descricao TEXT,
+                codigo TEXT UNIQUE NOT NULL,
+                categoria TEXT,
+                preco REAL,
+                tamanho TEXT DEFAULT 'medio',
+                data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                ativo INTEGER DEFAULT 1,
+                user_id INTEGER,
+                FOREIGN KEY (user_id) REFERENCES usuarios (id)
+            )
+        ''')
+        conn.commit()
+        conn.close()
+        print("✅ Banco de dados inicializado com sucesso!")
+    except Exception as e:
+        print(f"❌ Erro ao inicializar banco: {e}")
 
-    conn.execute('''
-        CREATE TABLE IF NOT EXISTS usuarios (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            username TEXT UNIQUE NOT NULL,
-            email TEXT UNIQUE NOT NULL,
-            password TEXT NOT NULL,
-            data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-    ''')
+# Garantir que o banco existe a cada conexão
+def ensure_db():
+    """Garante que as tabelas existem antes de qualquer operação"""
+    init_db()
 
-    conn.execute('''
-        CREATE TABLE IF NOT EXISTS etiquetas (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            nome TEXT NOT NULL,
-            descricao TEXT,
-            codigo TEXT UNIQUE NOT NULL,
-            categoria TEXT,
-            preco REAL,
-            tamanho TEXT DEFAULT 'medio',
-            data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            ativo INTEGER DEFAULT 1,
-            user_id INTEGER,
-            FOREIGN KEY (user_id) REFERENCES usuarios (id)
-        )
-    ''')
 
-    conn.commit()
-    conn.close()
 
 
 # ==================== AUTENTICAÇÃO ====================
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    ensure_db()  # ← ADICIONE ESTA LINHA
+    
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
@@ -433,3 +445,6 @@ if __name__ == '__main__':
     init_db()
     port = int(os.environ.get('PORT', 5000))
     app.run(debug=False, host='0.0.0.0', port=port)
+else:
+    # Em produção (Render), inicializar o banco automaticamente
+    init_db()
