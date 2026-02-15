@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Início - Sistema de Etiquetas{% endblock %}
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8"><h2><i class="bi bi-tags"></i> Minhas Etiquetas</h2></div>
+    <div class="col-md-4">
+        <form action="{{ url_for('buscar') }}" method="get" class="d-flex">
+            <input class="form-control me-2" type="search" name="q" placeholder="Buscar...">
+            <button class="btn btn-outline-primary" type="submit"><i class="bi bi-search"></i></button>
+        </form>
+    </div>
+</div>
+{% if etiquetas %}
+<div class="row">
+    {% for etiqueta in etiquetas %}
+    <div class="col-md-4 mb-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5 class="card-title"><i class="bi bi-tag"></i> {{ etiqueta['nome'] }}</h5>
+                <p class="card-text"><strong>Código:</strong> <span class="badge bg-secondary">{{ etiqueta['codigo'] }}</span></p>
+                {% if etiqueta['categoria'] %}<p><strong>Categoria:</strong> {{ etiqueta['categoria'] }}</p>{% endif %}
+                {% if etiqueta['preco'] and etiqueta['preco'] > 0 %}
+                    <p><strong>Preço:</strong> <span class="text-success fw-bold">R$ {{ "%.2f"|format(etiqueta['preco']) }}</span></p>
+                {% endif %}
+                <div class="d-flex gap-2 mt-3">
+                    <a href="{{ url_for('gerar_pdf', id=etiqueta['id']) }}" class="btn btn-sm btn-success flex-fill"><i class="bi bi-file-earmark-pdf"></i> PDF</a>
+                    <a href="{{ url_for('editar', id=etiqueta['id']) }}" class="btn btn-sm btn-primary flex-fill"><i class="bi bi-pencil"></i> Editar</a>
+                    <a href="{{ url_for('deletar', id=etiqueta['id']) }}" class="btn btn-sm btn-danger flex-fill" onclick="return confirm('Deletar?')"><i class="bi bi-trash"></i></a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="alert alert-warning text-center">
+    <h4>Nenhuma etiqueta encontrada</h4>
+    <a href="{{ url_for('criar') }}" class="btn btn-primary mt-2"><i class="bi bi-plus-circle"></i> Criar Primeira Etiqueta</a>
+</div>
+{% endif %}
+{% endblock %}
